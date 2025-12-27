@@ -41,7 +41,7 @@
 <body>
 
     <audio id="bgMusic" loop preload="auto">
-        <source src="https://files.catbox.moe/8f31c6.mp3" type="audio/mpeg">
+        <source src="https://files.catbox.moe/m2jybg.mp3" type="audio/mpeg">
     </audio>
 
     <audio id="tickSound" preload="auto">
@@ -94,11 +94,9 @@
         let isZoomed = false;
         let touchStartX = 0;
 
-        // Xử lý tự động phát nhạc khi tương tác
         const playMusic = () => {
             const music = document.getElementById('bgMusic');
             music.play().catch(() => {});
-            // Gỡ bỏ event sau khi đã phát nhạc thành công để tránh lặp lại
             document.removeEventListener('mousedown', playMusic);
             document.removeEventListener('touchstart', playMusic);
             document.removeEventListener('keydown', playMusic);
@@ -143,7 +141,7 @@
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
             camera.position.z = getCameraZ(false);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.toneMapping = THREE.CineonToneMapping;
@@ -172,12 +170,12 @@
                 scene.add(lineMesh);
                 animate();
             });
-            window.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX);
+            window.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX, {passive: true});
             window.addEventListener('touchend', e => {
                 const diff = e.changedTouches[0].clientX - touchStartX;
                 if (diff > 40) isZoomed = true;
                 if (diff < -40) isZoomed = false;
-            });
+            }, {passive: true});
             window.addEventListener('mousedown', e => touchStartX = e.clientX);
             window.addEventListener('mouseup', e => {
                 const diff = e.clientX - touchStartX;
@@ -398,7 +396,10 @@
             resultText.innerText = "🚀 Đang xem vận may...";
             const size = gifts.length;
             const arc = (2 * Math.PI) / size;
-            const targetGiftIndex = 0; 
+
+            const restrictedIndices = [0, 2, 5];
+            const targetGiftIndex = restrictedIndices[Math.floor(Math.random() * restrictedIndices.length)];
+
             const stopAngleAtTarget = (2 * Math.PI) - (targetGiftIndex * arc) - (arc / 2) - (Math.PI / 2);
             const backDistance = arc * 1.5; 
             const overshootAngle = stopAngleAtTarget + backDistance;
@@ -438,7 +439,9 @@
                 } else {
                     isSpinning = false;
                     spinBtn.disabled = false;
-                    resultText.innerHTML = "✨ 🎂 50.000đ 🎉 ✨";
+                    const finalGift = gifts[targetGiftIndex];
+                    const suffix = (finalGift === "Mất Lượt") ? "" : "đ";
+                    resultText.innerHTML = `✨ 🎂 ${finalGift}${suffix} 🎉 ✨`;
                     congratsSound.play().catch(() => {});
                     createConfetti();
                 }
